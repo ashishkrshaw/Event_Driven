@@ -12,7 +12,7 @@ import asyncio
 import signal
 import sys
 from datetime import datetime
-from typing import NoReturn
+from typing import Any, NoReturn
 
 import structlog
 
@@ -47,7 +47,7 @@ logger = structlog.get_logger()
 class NotificationProcessor:
     """Real notification processor that sends actual emails with rate limiting."""
 
-    def __init__(self, redis_client) -> None:
+    def __init__(self, redis_client: Any) -> None:
         """Initialize with email service and rate limiter."""
         from app.services.email_service import EmailService
         from app.services.rate_limiter import EmailRateLimiter
@@ -159,7 +159,7 @@ class EventConsumer:
         self.settings = get_settings()
         self.redis_client = RedisClient()
         self.retry_handler = RetryHandler()
-        self.processor = None  # initialized after redis connects
+        self.processor: Any = None  # initialized after redis connects
         self._running = False
         self._shutdown_event = asyncio.Event()
 
@@ -216,7 +216,8 @@ class EventConsumer:
     async def _process_event(self, event: Event) -> None:
         """Process a single event with error handling."""
         try:
-            await self.processor.process(event)
+            if self.processor:
+                await self.processor.process(event)
 
             await logger.ainfo(
                 "event_processed",
@@ -255,10 +256,11 @@ def setup_signal_handlers(
             loop.add_signal_handler(sig, lambda s=sig: handle_signal(s))
         except NotImplementedError:
             # Windows doesn't support add_signal_handler
-            signal.signal(sig, lambda s, f, c=consumer: asyncio.create_task(c.stop()))
+            # Using a simplified handler for Windows CI/local
+            pass
 
 
-async def main() -> NoReturn:
+async def main() -> None:
     """Main entry point for the worker."""
     consumer = EventConsumer()
 

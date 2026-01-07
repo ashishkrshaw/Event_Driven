@@ -1,6 +1,7 @@
 """Email rate limiter using Redis for daily tracking."""
 
 from datetime import date
+from typing import Any
 
 import structlog
 
@@ -12,7 +13,7 @@ logger = structlog.get_logger()
 class EmailRateLimiter:
     """Track and limit daily email sends using Redis."""
 
-    def __init__(self, redis_client) -> None:
+    def __init__(self, redis_client: Any) -> None:
         self.redis = redis_client
         self.settings = get_settings()
         self._alert_sent_today = False
@@ -34,14 +35,14 @@ class EmailRateLimiter:
         # increment and set expiry to 48 hours (cleanup old keys)
         count = await self.redis.client.incr(key)
         await self.redis.client.expire(key, 60 * 60 * 48)
-        return count
+        return int(count) if count else 0
 
     async def can_send_email(self) -> bool:
         """Check if we're under the daily limit."""
         count = await self.get_today_count()
         return count < self.settings.daily_email_limit
 
-    async def check_and_alert(self, email_service) -> None:
+    async def check_and_alert(self, email_service: Any) -> None:
         """Send alert email if limit reached (once per day)."""
         if self._alert_sent_today:
             return

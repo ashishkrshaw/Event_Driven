@@ -1,8 +1,9 @@
 """FastAPI application entry point."""
 
 import time
-from collections.abc import AsyncGenerator
+from collections.abc import AsyncGenerator, Callable
 from contextlib import asynccontextmanager
+from typing import Any, cast
 
 import structlog
 from fastapi import FastAPI, Request, Response
@@ -89,11 +90,13 @@ def create_app() -> FastAPI:
 
     # Prometheus metrics middleware
     @app.middleware("http")
-    async def metrics_middleware(request: Request, call_next) -> Response:
+    async def metrics_middleware(
+        request: Request, call_next: Callable[[Request], Any]
+    ) -> Response:
         """Record request metrics for Prometheus."""
         # Skip metrics endpoint itself
         if request.url.path == "/metrics":
-            return await call_next(request)
+            return cast(Response, await call_next(request))
 
         start_time = time.perf_counter()
         response = await call_next(request)
@@ -112,7 +115,7 @@ def create_app() -> FastAPI:
             endpoint=endpoint,
         ).observe(duration)
 
-        return response
+        return cast(Response, response)
 
     # Include routers
     app.include_router(events_router)

@@ -4,6 +4,8 @@ import json
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 
+from typing import Any, cast
+
 import redis.asyncio as redis
 import structlog
 
@@ -27,10 +29,13 @@ class RedisClient:
     async def connect(self) -> None:
         """Establish connection to Redis."""
         if self._client is None:
-            self._client = redis.from_url(
-                self.redis_url,
-                encoding="utf-8",
-                decode_responses=True,
+            self._client = cast(
+                redis.Redis,
+                redis.from_url(
+                    self.redis_url,
+                    encoding="utf-8",
+                    decode_responses=True,
+                ),
             )
             await logger.ainfo("redis_connected", url=self.redis_url)
 
@@ -55,7 +60,7 @@ class RedisClient:
         Uses LPUSH for FIFO semantics with BRPOP consumption.
         """
         event_json = event.model_dump_json()
-        await self.client.lpush(self.queue_name, event_json)
+        await cast(Any, self.client.lpush(self.queue_name, event_json))
         await logger.ainfo(
             "event_enqueued",
             event_id=str(event.event_id),
@@ -73,7 +78,7 @@ class RedisClient:
         Returns:
             Event if available, None on timeout.
         """
-        result = await self.client.brpop(self.queue_name, timeout=timeout)
+        result = await cast(Any, self.client.brpop([self.queue_name], timeout=timeout))
         if result is None:
             return None
 
@@ -100,7 +105,7 @@ class RedisClient:
             "event": event.model_dump(mode="json"),
             "reason": reason,
         }
-        await self.client.lpush(self.dlq_name, json.dumps(dlq_entry))
+        await cast(Any, self.client.lpush(self.dlq_name, json.dumps(dlq_entry)))
         await logger.awarning(
             "event_dead_lettered",
             event_id=str(event.event_id),
@@ -122,16 +127,16 @@ class RedisClient:
 
     async def get_queue_length(self) -> int:
         """Get the current length of the event queue."""
-        return await self.client.llen(self.queue_name)
+        return cast(int, await cast(Any, self.client.llen(self.queue_name)))
 
     async def get_dlq_length(self) -> int:
         """Get the current length of the dead-letter queue."""
-        return await self.client.llen(self.dlq_name)
+        return cast(int, await cast(Any, self.client.llen(self.dlq_name)))
 
     async def health_check(self) -> bool:
         """Check if Redis connection is healthy."""
         try:
-            await self.client.ping()
+            await cast(Any, self.client.ping())
             return True
         except Exception:
             return False
