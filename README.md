@@ -20,13 +20,22 @@ I wanted to see how message queues actually work in code. Reading about them is 
 
 I've tried to make it easy to start up.
 
-### Using Docker (Simplest)
+### 1. Using Docker (Simplest)
 If you have Docker, you can start everything (API, Worker, Redis) with one command:
 ```bash
 docker-compose up --build
 ```
 
-### Manual Setup
+### 2. Deploy to AWS (One-Click)
+I wrote a simple `deploy.sh` script for Amazon Linux 2023. It asks for your DuckDNS domain and email credentials, then sets up Docker, Nginx, and SSL automatically.
+
+```bash
+# Just copy the deploy.sh to your EC2 and run:
+sudo bash deploy.sh
+```
+It uses Nginx server blocks so it won't conflict with other projects you might have running on port 80/443.
+
+### 3. Manual Setup (Step-by-Step)
 1. **Redis:** `docker run -d -p 6379:6379 redis:7-alpine`
 2. **Environment:**
    ```bash
@@ -35,6 +44,7 @@ docker-compose up --build
    pip install -r requirements.txt
    ```
 3. **App:** Run `uvicorn app.main:app` in one terminal and `python -m worker.consumer` in another.
+
 
 ## Testing it
 
