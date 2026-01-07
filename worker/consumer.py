@@ -51,6 +51,7 @@ class NotificationProcessor:
         """Initialize with email service and rate limiter."""
         from app.services.email_service import EmailService
         from app.services.rate_limiter import EmailRateLimiter
+
         self.email_service = EmailService()
         self.rate_limiter = EmailRateLimiter(redis_client)
         self.settings = get_settings()
@@ -71,7 +72,9 @@ class NotificationProcessor:
         # Extract email details from payload
         to_email = event.payload.get("to_email") or event.payload.get("email")
         message = event.payload.get("message", "You have a new notification!")
-        subject = event.payload.get("subject", f"Notification: {event.event_type.value}")
+        subject = event.payload.get(
+            "subject", f"Notification: {event.event_type.value}"
+        )
 
         if not to_email:
             await logger.awarning(
@@ -237,7 +240,9 @@ class EventConsumer:
             await self.redis_client.send_to_dlq(event, decision.reason)
 
 
-def setup_signal_handlers(consumer: EventConsumer, loop: asyncio.AbstractEventLoop) -> None:
+def setup_signal_handlers(
+    consumer: EventConsumer, loop: asyncio.AbstractEventLoop
+) -> None:
     """Set up signal handlers for graceful shutdown."""
 
     def handle_signal(sig: signal.Signals) -> None:
@@ -263,8 +268,12 @@ async def main() -> NoReturn:
     # Note: On Windows, signal handlers work differently
     # We use a simple approach that works cross-platform
     try:
-        loop.add_signal_handler(signal.SIGINT, lambda: asyncio.create_task(consumer.stop()))
-        loop.add_signal_handler(signal.SIGTERM, lambda: asyncio.create_task(consumer.stop()))
+        loop.add_signal_handler(
+            signal.SIGINT, lambda: asyncio.create_task(consumer.stop())
+        )
+        loop.add_signal_handler(
+            signal.SIGTERM, lambda: asyncio.create_task(consumer.stop())
+        )
     except NotImplementedError:
         # Windows fallback
         pass

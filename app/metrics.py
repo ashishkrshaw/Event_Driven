@@ -4,10 +4,12 @@ from prometheus_client import Counter, Gauge, Histogram, Info
 
 # Application info
 APP_INFO = Info("app", "Application information")
-APP_INFO.info({
-    "name": "event-notification-service",
-    "version": "1.0.0",
-})
+APP_INFO.info(
+    {
+        "name": "event-notification-service",
+        "version": "1.0.0",
+    }
+)
 
 # API Metrics
 HTTP_REQUESTS_TOTAL = Counter(

@@ -163,4 +163,3 @@ def create_app() -> FastAPI:
 
 # Create app instance
 app = create_app()
-

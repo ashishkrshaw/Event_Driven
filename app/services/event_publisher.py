@@ -47,4 +47,3 @@ class EventPublisher:
         )
 
         return event.to_response()
-

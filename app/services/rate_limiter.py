@@ -55,8 +55,8 @@ class EmailRateLimiter:
                         to_email=alert_email,
                         subject="[EventFlow] Daily Email Limit Reached",
                         body=f"Daily email limit of {self.settings.daily_email_limit} has been reached.\n\n"
-                             f"Emails sent today: {count}\n"
-                             f"New email requests will be queued but not sent until tomorrow.",
+                        f"Emails sent today: {count}\n"
+                        f"New email requests will be queued but not sent until tomorrow.",
                     )
                     self._alert_sent_today = True
                     await logger.awarning(
