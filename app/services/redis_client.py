@@ -3,7 +3,6 @@
 import json
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
-
 from typing import Any, cast
 
 import redis.asyncio as redis

@@ -9,10 +9,11 @@ This module implements the main consumer loop with:
 """
 
 import asyncio
+import contextlib
 import signal
 import sys
 from datetime import datetime
-from typing import Any, NoReturn
+from typing import Any
 
 import structlog
 
@@ -252,12 +253,8 @@ def setup_signal_handlers(
 
     # Handle SIGINT (Ctrl+C) and SIGTERM
     for sig in (signal.SIGINT, signal.SIGTERM):
-        try:
+        with contextlib.suppress(NotImplementedError):
             loop.add_signal_handler(sig, lambda s=sig: handle_signal(s))
-        except NotImplementedError:
-            # Windows doesn't support add_signal_handler
-            # Using a simplified handler for Windows CI/local
-            pass
 
 
 async def main() -> None:
@@ -269,16 +266,13 @@ async def main() -> None:
 
     # Note: On Windows, signal handlers work differently
     # We use a simple approach that works cross-platform
-    try:
+    with contextlib.suppress(NotImplementedError):
         loop.add_signal_handler(
             signal.SIGINT, lambda: asyncio.create_task(consumer.stop())
         )
         loop.add_signal_handler(
             signal.SIGTERM, lambda: asyncio.create_task(consumer.stop())
         )
-    except NotImplementedError:
-        # Windows fallback
-        pass
 
     try:
         await consumer.start()
